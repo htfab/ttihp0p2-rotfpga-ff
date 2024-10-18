@@ -13,18 +13,43 @@ module tb ();
     #1;
   end
 
-  // Wire up the inputs and outputs:
-  reg clk;
-  reg rst_n;
-  reg ena;
-  reg [7:0] ui_in;
-  reg [7:0] uio_in;
+  // wire up the inputs and outputs
+  reg  clk;
+  reg  rst_n;
+  reg  ena;
+  reg  in_se;
+  reg  in_sc;
+  reg  [1:0] in_cfg;
+  reg  in_lb;
+  reg  [1:0] in_lbc;
+  reg  [7:0] ui_in;
+
+  wire [7:0] uio_in;
+  assign uio_in[0] = in_se;
+  assign uio_in[1] = in_sc;
+  assign uio_in[3:2] = in_cfg;
+  assign uio_in[4] = in_lb;
+  assign uio_in[6:5] = in_lbc;
+
   wire [7:0] uo_out;
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
+  wire out_sc = uio_out[7];
+
+`ifdef GL_TEST
+  wire VPWR = 1'b1;
+  wire VGND = 1'b0;
+`endif
 
   // Replace tt_um_example with your module name:
-  tt_um_example user_project (
+  tt_um_htfab_rotfpga2 user_project (
+
+  // Include power ports for the Gate Level test:
+`ifdef GL_TEST
+      .VPWR(VPWR),
+      .VGND(VGND),
+`endif
+
       .ui_in  (ui_in),    // Dedicated inputs
       .uo_out (uo_out),   // Dedicated outputs
       .uio_in (uio_in),   // IOs: Input path

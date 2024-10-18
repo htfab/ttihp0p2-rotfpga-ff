@@ -1,6 +1,6 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# Tiny Tapeout Verilog Project Template
+# ROTFPGA v2a for Tiny Tapeout IHP 0p2
 
 - [Read the documentation for project](docs/info.md)
 
