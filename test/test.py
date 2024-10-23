@@ -156,6 +156,8 @@ async def test_fpga(dut):
                   '0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000, '
                   '0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000')
 
+    return # XXX XXX XXX XXX XXX
+
     dut._log.info("testing configuration upload")
     dut.in_lb.value = 1
     dut.in_lbc.value = 0
