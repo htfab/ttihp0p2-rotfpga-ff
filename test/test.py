@@ -57,7 +57,7 @@ class Cells:
             return getattr(self.dut.user_project.g.g_y[y].g_x[x].t, comp)
         except AttributeError:
             try:
-                return self.dut.project._id(f'\\g.g_y[{y}].g_x[{x}].t.{comp}', extended=False)
+                return self.dut.user_project._id(f'\\g.g_y[{y}].g_x[{x}].t.{comp}', extended=False)
             except AttributeError:
                 class Missing:
                     value = '?'
