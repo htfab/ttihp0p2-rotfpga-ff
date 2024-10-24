@@ -118,14 +118,12 @@ class Cells:
         return self.path(y, x, 'r_gnl')
     def r_ghl(self, y, x):
         return self.path(y, x, 'r_ghl')
-    def r_sc(self, y, x):
-        return self.path(y, x, 'r_sc')
     def config(self, y, x):
         return str(self.r_v(y, x).value) + str(self.r_h(y, x).value) + str(self.r_d(y, x).value)
     def config_val(self, y, x):
         return self.r_v(y, x).value * 4 + self.r_h(y, x).value * 2 + self.r_d(y, x).value
     def data(self, y, x):
-        return str(self.r_sc(y, x).value)
+        return str(self.out_sc(y, x).value)
     def state(self, y, x):
         return self.config(y, x) + self.data(y, x)
     def lbstate(self, y, x):
@@ -141,7 +139,7 @@ class Cells:
             for x in range(self.width):
                 l[0] += f'+--{self.out_t(y, x)}--{self.in_t(y, x)}--+'
                 l[1] += f'{self.in_l(y, x)}> A{self.r_gnl(y,x)}{self.r_ghl(y, x)}V >{self.out_r(y, x)}'
-                l[2] += f'|   {self.config_val(y, x)}{self.r_sc(y, x)}   |'
+                l[2] += f'|   {self.config_val(y, x)}{self.out_sc(y, x)}   |'
                 l[3] += f'{self.out_l(y, x)}< A  V <{self.in_r(y, x)}'
                 l[4] += f'+--{self.in_b(y, x)}--{self.out_b(y, x)}--+'
             r.extend(l)
@@ -191,8 +189,6 @@ async def test_fpga(dut):
     assert 'x' not in fs
     lbfs = cells.lbfullstate()
     assert 'x' not in lbfs
-
-    return # XXX XXX XXX XXX XXX
 
     dut._log.info("testing configuration upload")
     dut.in_lb.value = 1
