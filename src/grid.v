@@ -1,20 +1,24 @@
 `default_nettype none
 
 module p12_grid (
-   input clk,           // clock
-   input rst_n,         // active-low reset
-   input in_se,         // scan enable input
-   input in_sc,         // scan chain input
-   input [1:0] in_cfg,  // configuration latch selector
-   input in_lb,         // loop breaker enable
-   input [1:0] in_lbc,  // loop breaker class
-   input [7:0] ins,     // user input
-   output out_sc,       // scan chain output
-   output [7:0] outs    // user output
+   input clk,              // clock
+   input rst_n,            // active-low reset
+   input in_se,            // scan enable input
+   input in_sc,            // scan chain input
+   input [1:0] in_cfg_lbc, // configuration latch selector / loop breaker class (depends on in_se)
+   input in_lb,            // loop breaker enable
+   input in_ff_gate,       // clock gating for flip-flops
+   input in_l_gate,        // clock gating for simulated latches
+   input [7:0] ins,        // user input
+   output out_sc,          // scan chain output
+   output [7:0] outs       // user output
 );
 
 `define WIDTH 8
 `define HEIGHT 8
+
+wire [1:0] in_cfg = in_se ? in_cfg_lbc : 2'b00;
+wire [1:0] in_lbc = in_se ? 2'b00 : in_cfg_lbc;
 
 wire ic_u[`HEIGHT-1:0][`WIDTH-1:0];   // interconnect for data going upwards
 wire ic_d[`HEIGHT-1:0][`WIDTH-1:0];   // ~ downwards
@@ -43,6 +47,8 @@ for (y=0; y<`HEIGHT; y=y+1) begin:g_y
       p12_tile t (
          .clk(clk),
          .rst_n(rst_n),
+         .ff_gate(in_ff_gate),
+         .l_gate(in_l_gate),
          .in_se(in_se),
          .in_sc(ic_sc[y][x]),
          .in_lb(ic_lb[y][x]),

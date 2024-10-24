@@ -1,6 +1,6 @@
 ![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 
-# ROTFPGA v2a for Tiny Tapeout IHP 0p2
+# ROTFPGA v2b for Tiny Tapeout IHP 0p2
 
 - [Read the documentation for project](docs/info.md)
 

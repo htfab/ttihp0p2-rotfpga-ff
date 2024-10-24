@@ -1,6 +1,6 @@
 # Tiny Tapeout project information
 project:
-  title:        "ROTFPGA v2a"  # Project title
+  title:        "ROTFPGA v2b"  # Project title
   author:       "htfab"        # Your name
   discord:      "h.tamas"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
   description:  "A reconfigurable logic circuit made of identical rotatable tiles"  # One line description of what your project does
@@ -11,7 +11,7 @@ project:
   tiles: "1x2"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
 
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_htfab_rotfpga2"
+  top_module:  "tt_um_htfab_rotfpga2_ff"
 
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
@@ -19,7 +19,7 @@ project:
   source_files:
     - "tile.v"
     - "grid.v"
-    - "tt_um_htfab_rotfpga2.v"
+    - "tt_um_htfab_rotfpga2_ff.v"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 pinout:
@@ -46,11 +46,11 @@ pinout:
   # Bidirectional pins
   uio[0]: "_scan enable_ input"
   uio[1]: "_scan chain_ input"
-  uio[2]: "_configuration_ input bit 0"
-  uio[3]: "_configuration_ input bit 1"
+  uio[2]: "_configuration_ / _loop breaker class_ input bit 0"
+  uio[3]: "_configuration_ / _loop breaker class_ input bit 1"
   uio[4]: "_loop breaker enable_ input"
-  uio[5]: "_loop breaker class_ input bit 0"
-  uio[6]: "_loop breaker class_ input bit 1"
+  uio[5]: "clock gating for flip-flops"
+  uio[6]: "clock gating for simulated latches"
   uio[7]: "_scan chain_ output"
 
 # Do not change!

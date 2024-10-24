@@ -3,6 +3,8 @@
 module p12_tile (
    input clk,     // clock
    input rst_n,   // active-low reset
+   input ff_gate, // clock gating for flip-flop
+   input l_gate,  // clock gating for simulated latches
    input in_se,   // scan chain enable
    input in_sc,   // scan chain input
    input in_lb,   // loop breaker
@@ -32,15 +34,15 @@ wire w_gn, w_gh, w_oh, w_ov, w_si;
 // in_v, in_h, in_d specify whether to update the latches
 // r_sc is the potential new value, coming from the tile's flip-flop
 
-always_latch begin
+always_ff @(posedge clk) begin
     if (!rst_n) begin
-        r_v = 1'b0;
-        r_h = 1'b0;
-        r_d = 1'b0;
-    end else begin
-        if (in_v) r_v = r_sc;
-        if (in_h) r_h = r_sc;
-        if (in_d) r_d = r_sc;
+        r_v <= 1'b0;
+        r_h <= 1'b0;
+        r_d <= 1'b0;
+    end else if (l_gate) begin
+        if (in_v) r_v <= r_sc;
+        if (in_h) r_h <= r_sc;
+        if (in_d) r_d <= r_sc;
     end
 end
 
@@ -83,7 +85,7 @@ assign w_si = in_se ? in_sc : w_dv;
 always_ff @(posedge clk) begin
     if (!rst_n) begin
         r_sc <= 1'b0;
-    end else begin
+    end else if (ff_gate) begin
         r_sc <= w_si;
     end
 end
@@ -94,13 +96,13 @@ assign w_na = ~(w_hr & w_vb);
 // r_gnl and r_ghl are the latched versions of w_na and w_dh respectively
 // they are only updated when in_lb is low
 
-always_latch begin
+always_ff @(posedge clk) begin
     if (!rst_n) begin
-        r_gnl = 1'b0;
-        r_ghl = 1'b0;
-    end else begin
-        if (!in_lb) r_gnl = w_na;
-        if (!in_lb) r_ghl = w_dh;
+        r_gnl <= 1'b0;
+        r_ghl <= 1'b0;
+    end else if(l_gate) begin
+        if (!in_lb) r_gnl <= w_na;
+        if (!in_lb) r_ghl <= w_dh;
     end
 end
 

@@ -14,22 +14,24 @@ module tb ();
   end
 
   // wire up the inputs and outputs
-  reg  clk;
-  reg  rst_n;
-  reg  ena;
-  reg  in_se;
-  reg  in_sc;
-  reg  [1:0] in_cfg;
-  reg  in_lb;
-  reg  [1:0] in_lbc;
-  reg  [7:0] ui_in;
+  reg clk;
+  reg rst_n;
+  reg ena;
+  reg in_se;
+  reg in_sc;
+  reg [1:0] in_cfg_lbc;
+  reg in_lb;
+  reg in_ff_gate;
+  reg in_l_gate;
+  reg [7:0] ui_in;
 
   wire [7:0] uio_in;
   assign uio_in[0] = in_se;
   assign uio_in[1] = in_sc;
-  assign uio_in[3:2] = in_cfg;
+  assign uio_in[3:2] = in_cfg_lbc;
   assign uio_in[4] = in_lb;
-  assign uio_in[6:5] = in_lbc;
+  assign uio_in[5] = in_ff_gate;
+  assign uio_in[6] = in_l_gate;
 
   wire [7:0] uo_out;
   wire [7:0] uio_out;
@@ -37,7 +39,7 @@ module tb ();
   wire out_sc = uio_out[7];
 
   // Replace tt_um_example with your module name:
-  tt_um_htfab_rotfpga2 user_project (
+  tt_um_htfab_rotfpga2_ff user_project (
       .ui_in  (ui_in),    // Dedicated inputs
       .uo_out (uo_out),   // Dedicated outputs
       .uio_in (uio_in),   // IOs: Input path

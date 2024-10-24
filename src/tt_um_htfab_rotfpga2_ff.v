@@ -1,6 +1,6 @@
 `default_nettype none
 
-module tt_um_htfab_rotfpga2 (
+module tt_um_htfab_rotfpga2_ff (
     input  wire [7:0] ui_in,    // input pins (for user input)
     output wire [7:0] uo_out,   // output pins (for user output)
     input  wire [7:0] uio_in,   // bidirectional input pins (for scan chain, configuration and loop breaker input)
@@ -16,9 +16,10 @@ module tt_um_htfab_rotfpga2 (
         .rst_n(rst_n),
         .in_se(uio_in[0]),
         .in_sc(uio_in[1]),
-        .in_cfg(uio_in[3:2]),
+        .in_cfg_lbc(uio_in[3:2]),
         .in_lb(uio_in[4]),
-        .in_lbc(uio_in[6:5]),
+        .in_ff_gate(uio_in[5]),
+        .in_l_gate(uio_in[6]),
         .ins(ui_in),
         .out_sc(uio_out[7]),
         .outs(uo_out)
