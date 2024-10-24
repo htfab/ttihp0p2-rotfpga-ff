@@ -114,20 +114,45 @@ class Cells:
         return self.path(y, x, 'r_h')
     def r_d(self, y, x):
         return self.path(y, x, 'r_d')
+    def r_gnl(self, y, x):
+        return self.path(y, x, 'r_gnl')
+    def r_ghl(self, y, x):
+        return self.path(y, x, 'r_ghl')
+    def r_sc(self, y, x):
+        return self.path(y, x, 'r_sc')
     def config(self, y, x):
         return str(self.r_v(y, x).value) + str(self.r_h(y, x).value) + str(self.r_d(y, x).value)
+    def config_val(self, y, x):
+        return self.r_v(y, x).value * 4 + self.r_h(y, x).value * 2 + self.r_d(y, x).value
     def data(self, y, x):
-        return str(self.out_sc(y, x).value)
+        return str(self.r_sc(y, x).value)
     def state(self, y, x):
         return self.config(y, x) + self.data(y, x)
+    def lbstate(self, y, x):
+        return str(self.r_gnl(y,x).value) + str(self.r_ghl(y, x).value)
     def fullstate(self):
         return ', '.join(' '.join(self.state(y, x) for x in range(self.width)) for y in range(self.height))
+    def lbfullstate(self):
+        return ', '.join(' '.join(self.lbstate(y, x) for x in range(self.width)) for y in range(self.height))
+    def dumpstate(self):
+        r = []
+        for y in range(self.height):
+            l = [''] * 5
+            for x in range(self.width):
+                l[0] += f'+--{self.out_t(y, x)}--{self.in_t(y, x)}--+'
+                l[1] += f'{self.in_l(y, x)}> A{self.r_gnl(y,x)}{self.r_ghl(y, x)}V >{self.out_r(y, x)}'
+                l[2] += f'|   {self.config_val(y, x)}{self.r_sc(y, x)}   |'
+                l[3] += f'{self.out_l(y, x)}< A  V <{self.in_r(y, x)}'
+                l[4] += f'+--{self.in_b(y, x)}--{self.out_b(y, x)}--+'
+            r.extend(l)
+        return '\n'.join(r)
 
 async def ticktock(dut):
+    await Timer(5, units='ns')
     dut.clk.value = 1
     await Timer(10, units='ns')
     dut.clk.value = 0
-    await Timer(10, units='ns')
+    await Timer(5, units='ns')
 
 async def delay():
     await Timer(1, units='ns')
@@ -139,22 +164,33 @@ async def test_fpga(dut):
     height, width = 8, 8
     cells = Cells(dut, height, width)
 
+    dut.clk.value = 0
+    dut.rst_n.value = 1
+    dut.ena.value = 1
+    dut.in_se.value = 0
+    dut.in_sc.value = 0
+    dut.in_cfg.value = 0
+    dut.in_lb.value = 1
+    dut.in_lbc.value = 0
+    dut.ui_in.value = 0
+
     dut._log.info("testing reset logic")
     fs = cells.fullstate()
-    assert fs == ('xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, '
-                  'xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, '
-                  'xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, '
-                  'xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx, xxxx xxxx xxxx xxxx xxxx xxxx xxxx xxxx')
+    assert '0' not in fs
+    assert '1' not in fs
+    lbfs = cells.lbfullstate()
+    assert '0' not in lbfs
+    assert '1' not in lbfs
+
     dut.rst_n.value = 0
-    for i in range(height * width + 1):
-        await ticktock(dut)
+    await ticktock(dut)
     dut.rst_n.value = 1
     await ticktock(dut)
     fs = cells.fullstate()
-    assert fs == ('0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000, '
-                  '0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000, '
-                  '0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000, '
-                  '0000 0000 0000 0000 0000 0000 0000 0000, 0000 0000 0000 0000 0000 0000 0000 0000')
+    assert '1' not in fs
+    assert 'x' not in fs
+    lbfs = cells.lbfullstate()
+    assert 'x' not in lbfs
 
     return # XXX XXX XXX XXX XXX
 
@@ -163,14 +199,13 @@ async def test_fpga(dut):
     dut.in_lbc.value = 0
     for k in range(4):
         dut.in_se.value = 1
-        dut.in_cfg.value = 0
+        dut.in_cfg.value = 3-k
         for l in reversed(fpga_config):
             for v in reversed(l):
                 dut.in_sc.value = (v>>k) & 1
                 await ticktock(dut)
-        dut.in_se.value = 0
-        dut.in_cfg.value = 3-k
-        await ticktock(dut)
+    dut.in_se.value = 0
+    dut.in_cfg.value = 0
     fs = cells.fullstate()
     cmps = ', '.join(' '.join(bin(fpga_config[y][x]*2)[2:].rjust(4, '0') for x in range(width)) for y in range(height))
     assert fs == cmps
@@ -201,7 +236,6 @@ async def test_fpga(dut):
                 dut.in_sc.value = v
                 await ticktock(dut)
         dut.in_se.value = 0
-        await ticktock(dut)
         dut._log.info(f"round {test}, propagation test 1")
         for prop in range(50):
             for lbc in (1, 2, 3, 0):
@@ -264,17 +298,17 @@ async def test_fpga(dut):
     dut._log.info("reconfiguration")
     for k in range(4):
         dut.in_se.value = 1
-        dut.in_cfg.value = 0
+        dut.in_cfg.value = 3-k
         for j in reversed(range(height)):
             for i in reversed(range(width)):
                 cfg = {(0, 0): 0, (0, 1): 5, (1, 0): 6, (1, 1): 3}[(j%2, i%2)]
                 dut.in_sc.value = (cfg>>k) & 1
                 await ticktock(dut)
-        dut.in_se.value = 0
-        dut.in_cfg.value = 3-k
-        await ticktock(dut)
-    dut.ui_in.value = 0
+    dut.in_se.value = 0
+    dut.in_cfg.value = 0
+
     dut._log.info("zero input, manual cycles")
+    dut.ui_in.value = 0
     for i in range(3):
         for prop in range(50):
             for lbc in (1, 2, 3, 0):
@@ -282,6 +316,7 @@ async def test_fpga(dut):
                 await delay()
         await ticktock(dut)
     assert dut.uo_out.value == 0b10101010
+
     dut.ui_in.value = 0b01110010
     for i in range(3):
         dut._log.info(f"custom input, manual cycles, step {i}")
@@ -291,12 +326,14 @@ async def test_fpga(dut):
                 await delay()
         await ticktock(dut)
     assert dut.uo_out.value == 0b11010010
-    dut.ui_in.value = 0
+
     dut._log.info("zero input, automatic cycles")
+    dut.ui_in.value = 0
     dut.in_lb.value = 0
     for i in range(3):
         await ticktock(dut)
     assert dut.uo_out.value == 0b10101010
+
     dut.ui_in.value = 0b01110010
     for i in range(3):
         dut._log.info(f"custom input, automatic cycles, step {i}")

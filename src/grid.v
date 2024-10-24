@@ -25,13 +25,10 @@ wire ic_lb[`HEIGHT-1:0][`WIDTH-1:0];  // loop breaker input for the current tile
 wire [1:0] bi_l[`HEIGHT-1:0][`WIDTH-1:0];  // loop breaker inserts: bypass or latch (going back to the tile)
 wire [1:0] bo_b[`HEIGHT-1:0][`WIDTH-1:0];  // loop breaker inserts: bypass (coming from the tile)
 wire [1:0] bo_l[`HEIGHT-1:0][`WIDTH-1:0];  // loop breaker inserts: latch (coming from the tile)
-wire in_se_r = rst_n ? in_se : 1'b1;  // scan enable input, overridden on reset
-wire in_sc_r = rst_n ? in_sc : 1'b0;  // scan chain input, overridden on reset
-wire in_lb_r = rst_n ? in_lb : 1'b1;  // loop breaker enable, overridden on reset
-wire cfg_v = rst_n ? (in_cfg == 2'd1) : 1'b1;   // whether to update "vertical flip" latches
-wire cfg_h = rst_n ? (in_cfg == 2'd2) : 1'b1;   // whether to update "horizontal flip" latches
-wire cfg_d = rst_n ? (in_cfg == 2'd3) : 1'b1;   // whether to update "diagonal flip" latches"
-wire [3:0] w_lb = {in_lb_r ? {in_lbc != 2'd3, in_lbc != 2'd2, in_lbc != 2'd1} : 3'b0, in_lbc != 2'd0 || !rst_n};
+wire cfg_v = in_cfg == 2'd1;          // whether to update "vertical flip" latches
+wire cfg_h = in_cfg == 2'd2;          // whether to update "horizontal flip" latches
+wire cfg_d = in_cfg == 2'd3;          // whether to update "diagonal flip" latches"
+wire [3:0] w_lb = {in_lb ? {in_lbc != 2'd3, in_lbc != 2'd2, in_lbc != 2'd1} : 3'b0, in_lbc != 2'd0};
                                       // whether to latch outputs, for each of the four loop breaker classes
 
 generate genvar x, y;
@@ -40,12 +37,13 @@ for (y=0; y<`HEIGHT; y=y+1) begin:g_y
    assign ic_r[y][0] = ins[y];
    assign ic_l[y][`WIDTH] = ic_l[y][0];
    assign outs[y] = ic_r[y][`WIDTH];
-   assign ic_sc[y][0] = (y > 0) ? ic_sc[y-1][`WIDTH] : in_sc_r;
+   assign ic_sc[y][0] = (y > 0) ? ic_sc[y-1][`WIDTH] : in_sc;
    for (x=0; x<`WIDTH; x=x+1) begin:g_x
       // instantiate the tiles, with wrap-around at top and bottom edges
       p12_tile t (
          .clk(clk),
-         .in_se(in_se_r),
+         .rst_n(rst_n),
+         .in_se(in_se),
          .in_sc(ic_sc[y][x]),
          .in_lb(ic_lb[y][x]),
          .in_v(cfg_v),

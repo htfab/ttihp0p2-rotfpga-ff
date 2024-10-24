@@ -2,6 +2,7 @@
 
 module p12_tile (
    input clk,     // clock
+   input rst_n,   // active-low reset
    input in_se,   // scan chain enable
    input in_sc,   // scan chain input
    input in_lb,   // loop breaker
@@ -32,9 +33,15 @@ wire w_gn, w_gh, w_oh, w_ov, w_si;
 // r_sc is the potential new value, coming from the tile's flip-flop
 
 always_latch begin
-    if (in_v) r_v = r_sc;
-    if (in_h) r_h = r_sc;
-    if (in_d) r_d = r_sc;
+    if (!rst_n) begin
+        r_v = 1'b0;
+        r_h = 1'b0;
+        r_d = 1'b0;
+    end else begin
+        if (in_v) r_v = r_sc;
+        if (in_h) r_h = r_sc;
+        if (in_d) r_d = r_sc;
+    end
 end
 
 // convert inputs of the rotated/reflected tile to inputs of the original upright tile
@@ -74,7 +81,11 @@ assign w_dv = r_d ? w_hl : w_vt;
 // flip-flop with scan chain override
 assign w_si = in_se ? in_sc : w_dv;
 always_ff @(posedge clk) begin
-    r_sc <= w_si;
+    if (!rst_n) begin
+        r_sc <= 1'b0;
+    end else begin
+        r_sc <= w_si;
+    end
 end
 // nand gate
 assign w_na = ~(w_hr & w_vb);
@@ -84,8 +95,13 @@ assign w_na = ~(w_hr & w_vb);
 // they are only updated when in_lb is low
 
 always_latch begin
-    if (!in_lb) r_gnl = w_na;
-    if (!in_lb) r_ghl = w_dh;
+    if (!rst_n) begin
+        r_gnl = 1'b0;
+        r_ghl = 1'b0;
+    end else begin
+        if (!in_lb) r_gnl = w_na;
+        if (!in_lb) r_ghl = w_dh;
+    end
 end
 
 // to save on chip space, we don't use the loop breaker in every tile
